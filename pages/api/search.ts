@@ -45,39 +45,29 @@ async function loadDataIfNeeded() {
   }
 }
 
-function formatClientName(client: csvUtils.ClientRecord, index: number): string | undefined {
-  const firstName = client[`Client${index} First Name`]
-  const lastName = client[`Client${index} Last Name`]
+// Helper function to extract client names from the File+Client Name.csv data
+function getClientNamesFromFileData(fileNumber: string): string[] {
+  if (!clientDataCache) return []
   
-  if (firstName || lastName) {
-    return [firstName, lastName].filter(Boolean).join(' ')
-  }
+  const clientRecord = clientDataCache.find(record => record.FILE_NUMBER === fileNumber)
+  if (!clientRecord) return []
   
-  return undefined
-}
-
-function getClientNames(client: csvUtils.ClientRecord): string[] {
   const names: string[] = []
   
+  // Check each client field pair (up to 4 clients per record)
   for (let i = 1; i <= 4; i++) {
-    const name = formatClientName(client, i)
-    if (name) {
-      names.push(name)
+    const firstName = clientRecord[`Client${i} First Name`]
+    const lastName = clientRecord[`Client${i} Last Name`]
+    
+    if (firstName || lastName) {
+      const fullName = [firstName, lastName].filter(Boolean).join(' ')
+      if (fullName.trim()) {
+        names.push(fullName)
+      }
     }
   }
   
   return names
-}
-
-function formatProviderName(provider: csvUtils.CounselorAssignmentRecord): string | undefined {
-  const firstName = provider['Counselor First Name']
-  const lastName = provider['Counselor Last Name']
-  
-  if (firstName || lastName) {
-    return [firstName, lastName].filter(Boolean).join(' ')
-  }
-  
-  return undefined
 }
 
 export default async function handler(
@@ -117,7 +107,7 @@ export default async function handler(
     
     const matchedClients = csvUtils.searchRecords(clientDataCache, query, clientSearchFields)
     
-    // Search in intake data - only search by file number initially
+    // Search in intake data
     const intakeSearchFields = ['FILE NUMBER']
     const matchedIntakes = csvUtils.searchRecords(intakeDataCache, query, intakeSearchFields)
     
@@ -130,7 +120,7 @@ export default async function handler(
     
     const matchedCounselors = csvUtils.searchRecords(counselorDataCache, query, counselorSearchFields)
     
-    // Search in session data - only search by file number initially
+    // Search in session data
     const sessionSearchFields = ['File Number']
     const matchedSessions = csvUtils.searchRecords(sessionDataCache, query, sessionSearchFields)
     
@@ -144,18 +134,21 @@ export default async function handler(
     
     // For each matched file number, gather all relevant information
     for (const fileNumber of fileNumbers) {
-      // Find client info
+      // Find client info from File+Client Name.csv
       const clientInfo = clientDataCache.find(client => client.FILE_NUMBER === fileNumber)
       
       if (clientInfo) {
-        const clientNames = getClientNames(clientInfo)
+        // Get client names from the record
+        const clientNames = getClientNamesFromFileData(fileNumber)
+        const clientNamesString = clientNames.join(', ')
         
         results.push({
           fileNumber,
           type: 'client',
-          name: clientNames.join(', '),
+          name: clientNamesString,
           details: {
-            ...clientInfo
+            ...clientInfo,
+            clientNames // Include the array of names for easier processing
           }
         })
       }
@@ -186,7 +179,13 @@ export default async function handler(
       const counselorInfo = counselorDataCache.filter(counselor => counselor['FILE NUMBER'] === fileNumber)
       
       for (const counselor of counselorInfo) {
-        const providerName = formatProviderName(counselor)
+        // Format provider name
+        let providerName = ''
+        if (counselor['Counselor First Name'] || counselor['Counselor Last Name']) {
+          providerName = [counselor['Counselor First Name'], counselor['Counselor Last Name']]
+            .filter(Boolean)
+            .join(' ')
+        }
         
         results.push({
           fileNumber,
