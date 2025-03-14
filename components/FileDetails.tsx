@@ -1,334 +1,247 @@
-import React, { useState } from 'react'
-import styles from '@/styles/FileDetails.module.css'
+import React, { useState } from 'react';
+import styles from '@/styles/FileDetails.module.css';
 
 // Type definitions
 interface ClientDetails {
-  dob?: string
-  address?: string
-  phone?: string
-  [key: string]: any
+  clientNames?: string[];
+  name?: string;
+  [key: string]: any;
 }
 
 interface SessionDetails {
-  date?: string
-  provider?: string
-  notes?: string
-  status?: string
-  supervisionGroup?: string
-  [key: string]: any
+  date?: string;
+  supervisionGroup?: string;
+  status?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  fee?: string;
+  notes?: string;
+  [key: string]: any;
 }
 
 interface ProviderDetails {
-  specialty?: string
-  location?: string
-  therapyType?: string
-  locationDetail?: string
-  intakeDate?: string
-  endDate?: string
-  [key: string]: any
+  name?: string;
+  therapyType?: string;
+  intakeDate?: string;
+  endDate?: string;
+  location?: string;
+  status?: string;
+  locationDetail?: string;
+  [key: string]: any;
 }
 
-type Details = ClientDetails | SessionDetails | ProviderDetails
-
-interface SearchResult {
-  fileNumber: string
-  type: 'client' | 'provider' | 'session'
-  name?: string
-  details: Details
+export interface SearchResult {
+  fileNumber: string;
+  type: 'client' | 'provider' | 'session';
+  name?: string;
+  details: Record<string, any>;
 }
 
 interface FileDetailsProps {
-  fileData: SearchResult[]
+  fileNumber: string;
+  fileData: {
+    client?: ClientDetails;
+    providers?: ProviderDetails[];
+    sessions?: SessionDetails[];
+  };
 }
 
-const FileDetails: React.FC<FileDetailsProps> = ({ fileData }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'intake' | 'sessions'>('overview')
+const FileDetails: React.FC<FileDetailsProps> = ({ fileNumber, fileData }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'intake' | 'session'>('overview');
   
-  if (!fileData || fileData.length === 0) {
-    return <div className={styles.noData}>No file data available</div>
+  // Handle null or undefined fileData
+  if (!fileData) {
+    return <div className={styles.fileDetailsContainer}>
+      <h2>No data available for file #{fileNumber}</h2>
+    </div>;
   }
   
-  // Get file number
-  const fileNumber = fileData[0].fileNumber
+  const { client, providers, sessions } = fileData;
+
+  // Get the formatted client names
+  const clientNames = client?.clientNames || [];
   
-  // Group results by type
-  const clientData = fileData.filter(item => item.type === 'client')
-  const providerData = fileData.filter(item => item.type === 'provider')
-  const sessionData = fileData.filter(item => item.type === 'session')
+  // Get the most recent session date
+  const sortedSessions = [...(sessions || [])].sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
   
-  // Get client names
-  const clientNames = clientData.map(client => client.name).filter(Boolean) as string[]
+  const latestSession = sortedSessions.length > 0 ? sortedSessions[0] : null;
+  const latestSessionDate = latestSession?.date ? new Date(latestSession.date).toLocaleDateString() : 'N/A';
   
-  // Get provider names
-  const providerNames = providerData.map(provider => provider.name).filter(Boolean) as string[]
+  // Find the earliest intake date from providers
+  let earliestIntakeDate = 'N/A';
+  if (providers && providers.length > 0) {
+    const intakeDates = providers
+      .map(p => p.intakeDate)
+      .filter(Boolean)
+      .map(date => new Date(date as string));
+    
+    if (intakeDates.length > 0) {
+      const earliest = new Date(Math.min(...intakeDates.map(d => d.getTime())));
+      earliestIntakeDate = earliest.toLocaleDateString();
+    }
+  }
   
-  // Get dates
-  const intakeDates = providerData
-    .map(provider => provider.details.intakeDate)
-    .filter(Boolean) as string[]
+  // Group sessions by supervision group
+  const sessionsByGroup: Record<string, SessionDetails[]> = {};
   
-  const sessionDates = sessionData
-    .map(session => session.details.date)
-    .filter(Boolean) as string[]
-    .map(date => new Date(date))
-    .sort((a, b) => b.getTime() - a.getTime())  // Sort in descending order
-  
-  const latestDate = sessionDates.length > 0 
-    ? sessionDates[0].toLocaleDateString() 
-    : 'N/A'
-  
-  const intakeDate = intakeDates.length > 0 ? intakeDates[0] : 'N/A'
-  
-  // Get therapy types
-  const therapyTypes = new Set(
-    providerData
-      .map(provider => provider.details.therapyType)
-      .filter(Boolean) as string[]
-  )
-  
-  // Get locations
-  const locations = new Set(
-    providerData
-      .map(provider => provider.details.location)
-      .filter(Boolean) as string[]
-  )
-  
-  // Get location details
-  const locationDetails = new Set(
-    providerData
-      .map(provider => provider.details.locationDetail)
-      .filter(Boolean) as string[]
-  )
-  
-  // Get supervision groups
-  const supervisionGroups = new Set(
-    sessionData
-      .map(session => session.details.supervisionGroup)
-      .filter(Boolean) as string[]
-  )
-  
+  if (sessions) {
+    sessions.forEach(session => {
+      const group = session.supervisionGroup || 'Unassigned';
+      if (!sessionsByGroup[group]) {
+        sessionsByGroup[group] = [];
+      }
+      sessionsByGroup[group].push(session);
+    });
+  }
+
   return (
     <div className={styles.fileDetailsContainer}>
       <div className={styles.fileHeader}>
-        <h1 className={styles.fileTitle}>File #{fileNumber}</h1>
+        <h1>File #{fileNumber}</h1>
         {clientNames.length > 0 && (
-          <div className={styles.clientNames}>
-            {clientNames.join(', ')}
-          </div>
+          <h2>{clientNames.join(', ')}</h2>
         )}
       </div>
       
-      <div className={styles.tabsContainer}>
-        <div className={styles.tabs}>
-          <button 
-            className={`${styles.tabButton} ${activeTab === 'overview' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </button>
-          <button 
-            className={`${styles.tabButton} ${activeTab === 'intake' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('intake')}
-          >
-            Intake Information
-          </button>
-          <button 
-            className={`${styles.tabButton} ${activeTab === 'sessions' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('sessions')}
-          >
-            Session History
-          </button>
-        </div>
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'overview' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Overview
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'intake' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('intake')}
+        >
+          Intake Information
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'session' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('session')}
+        >
+          Session History
+        </button>
       </div>
       
       <div className={styles.tabContent}>
         {activeTab === 'overview' && (
           <div className={styles.overviewTab}>
-            <div className={styles.overviewGrid}>
-              <div className={styles.overviewCard}>
-                <h3 className={styles.cardTitle}>File Information</h3>
-                <div className={styles.cardContent}>
-                  <div className={styles.infoItem}>
-                    <span className={styles.infoLabel}>File Number:</span>
-                    <span className={styles.infoValue}>{fileNumber}</span>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.infoLabel}>File Type:</span>
-                    <span className={styles.infoValue}>
-                      {clientNames.length > 1 ? 'Family/Couple File' : 'Individual File'}
-                    </span>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.infoLabel}>Intake Date:</span>
-                    <span className={styles.infoValue}>{intakeDate}</span>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.infoLabel}>Latest Activity:</span>
-                    <span className={styles.infoValue}>{latestDate}</span>
-                  </div>
-                </div>
+            <div className={styles.overviewSection}>
+              <div className={styles.clientSection}>
+                <h3>Client Information</h3>
+                {clientNames.length > 0 ? (
+                  <ul>
+                    {clientNames.map((name, index) => (
+                      <li key={index}>{name}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No client information available</p>
+                )}
               </div>
               
-              <div className={styles.overviewCard}>
-                <h3 className={styles.cardTitle}>Therapy Information</h3>
-                <div className={styles.cardContent}>
-                  {therapyTypes.size > 0 && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Therapy Type:</span>
-                      <span className={styles.infoValue}>
-                        {Array.from(therapyTypes).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {locations.size > 0 && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Location:</span>
-                      <span className={styles.infoValue}>
-                        {Array.from(locations).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {locationDetails.size > 0 && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Location Details:</span>
-                      <span className={styles.infoValue}>
-                        {Array.from(locationDetails).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {supervisionGroups.size > 0 && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Supervision Groups:</span>
-                      <div className={styles.tagsList}>
-                        {Array.from(supervisionGroups).map((group, index) => (
-                          <span key={index} className={styles.tagItem}>{group}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <div className={styles.datesSection}>
+                <h3>Important Dates</h3>
+                <p><strong>Intake Date:</strong> {earliestIntakeDate}</p>
+                <p><strong>Latest Session:</strong> {latestSessionDate}</p>
               </div>
               
-              <div className={styles.overviewCard}>
-                <h3 className={styles.cardTitle}>Providers</h3>
-                <div className={styles.cardContent}>
-                  {providerNames.length > 0 ? (
-                    <ul className={styles.providersList}>
-                      {providerNames.map((name, index) => (
-                        <li key={index} className={styles.providerItem}>{name}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className={styles.noData}>No provider information available</p>
-                  )}
-                </div>
+              <div className={styles.providersSection}>
+                <h3>Providers</h3>
+                {providers && providers.length > 0 ? (
+                  <ul>
+                    {providers.map((provider, index) => (
+                      <li key={index}>
+                        {provider.name} 
+                        {provider.therapyType && ` - ${provider.therapyType}`}
+                        {provider.status && ` (${provider.status})`}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No provider information available</p>
+                )}
               </div>
-              
-              <div className={styles.overviewCard}>
-                <h3 className={styles.cardTitle}>Clients</h3>
-                <div className={styles.cardContent}>
-                  {clientNames.length > 0 ? (
-                    <ul className={styles.clientsList}>
-                      {clientNames.map((name, index) => (
-                        <li key={index} className={styles.clientItem}>{name}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className={styles.noData}>No client information available</p>
-                  )}
-                </div>
-              </div>
+            </div>
+            
+            <div className={styles.supervisorsSection}>
+              <h3>Supervision Groups</h3>
+              {Object.keys(sessionsByGroup).length > 0 ? (
+                <ul>
+                  {Object.keys(sessionsByGroup).map(group => (
+                    <li key={group}>
+                      <strong>{group}</strong> - {sessionsByGroup[group].length} sessions
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No supervision group information available</p>
+              )}
             </div>
           </div>
         )}
         
         {activeTab === 'intake' && (
           <div className={styles.intakeTab}>
-            {clientData.length > 0 ? (
-              <div className={styles.intakeDetails}>
-                {clientData.map((client, index) => (
-                  <div key={index} className={styles.intakeSection}>
-                    {client.name && (
-                      <h3 className={styles.intakeName}>{client.name}</h3>
-                    )}
-                    <div className={styles.intakeGrid}>
-                      {Object.entries(client.details).map(([key, value]) => {
-                        // Skip name fields as we display them separately
-                        if (key.toLowerCase().includes('name') && client.name) return null;
-                        
-                        return (
-                          <div key={key} className={styles.intakeItem}>
-                            <span className={styles.intakeLabel}>
-                              {key.charAt(0).toUpperCase() + key.slice(1)}:
-                            </span>
-                            <span className={styles.intakeValue}>{value}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className={styles.noData}>No intake information available</p>
-            )}
-          </div>
-        )}
-        
-        {activeTab === 'sessions' && (
-          <div className={styles.sessionsTab}>
-            {sessionData.length > 0 ? (
-              <div className={styles.sessionsTimeline}>
-                {sessionData
-                  .sort((a, b) => {
-                    const dateA = a.details.date ? new Date(a.details.date.toString()) : new Date(0);
-                    const dateB = b.details.date ? new Date(b.details.date.toString()) : new Date(0);
-                    return dateB.getTime() - dateA.getTime(); // Sort descending
-                  })
-                  .map((session, index) => (
-                    <div key={index} className={styles.sessionCard}>
-                      <div className={styles.sessionHeader}>
-                        <div className={styles.sessionDate}>
-                          {session.details.date || 'No date'}
-                        </div>
-                        <div className={styles.sessionStatus}>
-                          {session.details.status || 'N/A'}
-                        </div>
-                      </div>
-                      
-                      {session.details.supervisionGroup && (
-                        <div className={styles.sessionGroup}>
-                          <span className={styles.groupLabel}>Supervision Group:</span>
-                          <span className={styles.groupValue}>{session.details.supervisionGroup}</span>
-                        </div>
-                      )}
-                      
-                      <div className={styles.sessionDetails}>
-                        {Object.entries(session.details).map(([key, value]) => {
-                          // Skip fields we display separately
-                          if (['date', 'status', 'supervisionGroup'].includes(key)) return null;
-                          
-                          return (
-                            <div key={key} className={styles.sessionDetailItem}>
-                              <span className={styles.detailLabel}>
-                                {key.charAt(0).toUpperCase() + key.slice(1)}:
-                              </span>
-                              <span className={styles.detailValue}>{value}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
+            {client ? (
+              <div>
+                <h3>Client Intake Details</h3>
+                {Object.entries(client)
+                  .filter(([key]) => !['clientNames', 'type', 'fileNumber', 'name'].includes(key))
+                  .map(([key, value]) => (
+                    <div key={key} className={styles.detailItem}>
+                      <strong>{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</strong>
+                      <span>{value || 'N/A'}</span>
                     </div>
                   ))}
               </div>
             ) : (
-              <p className={styles.noData}>No session history available</p>
+              <p>No intake information available</p>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'session' && (
+          <div className={styles.sessionTab}>
+            <h3>Session History</h3>
+            {sessions && sessions.length > 0 ? (
+              <div className={styles.sessionsContainer}>
+                <table className={styles.sessionsTable}>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Supervision Group</th>
+                      <th>Status</th>
+                      <th>Payment</th>
+                      <th>Fee</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedSessions.map((session, index) => (
+                      <tr key={index}>
+                        <td>{session.date ? new Date(session.date).toLocaleDateString() : 'N/A'}</td>
+                        <td>{session.supervisionGroup || 'N/A'}</td>
+                        <td>{session.status || 'N/A'}</td>
+                        <td>{session.paymentStatus || 'N/A'}</td>
+                        <td>{session.fee || 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p>No session history available</p>
             )}
           </div>
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FileDetails
+export default FileDetails;
