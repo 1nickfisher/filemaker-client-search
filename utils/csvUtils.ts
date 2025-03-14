@@ -1,126 +1,151 @@
-import fs from 'fs'
-import path from 'path'
-import { parse } from 'csv-parse/sync'
+import fs from 'fs';
+import path from 'path';
+import { parse } from 'csv-parse';
 
-// Types for our data sources
+// Define interfaces for CSV data
 export interface ClientRecord {
-  FILE_NUMBER: string
-  'Client1 First Name'?: string
-  'Client1 Last Name'?: string
-  'Client2 First Name'?: string
-  'Client2 Last Name'?: string
-  'Client3 First Name'?: string
-  'Client3 Last Name'?: string
-  'Client4 First Name'?: string
-  'Client4 Last Name'?: string
-  'LOCATION DETAIL'?: string
-  [key: string]: any
+  FILE_NUMBER: string;
+  'Client1 First Name'?: string;
+  'Client1 Last Name'?: string;
+  'Client2 First Name'?: string;
+  'Client2 Last Name'?: string;
+  'Client3 First Name'?: string;
+  'Client3 Last Name'?: string;
+  'Client4 First Name'?: string;
+  'Client4 Last Name'?: string;
+  [key: string]: any;
 }
 
 export interface IntakeRecord {
-  'FILE NUMBER': string
-  DOB?: string
-  'EMERGENCY CONTACT NAME'?: string
-  'EMERGENCY CONTACT NUMBER'?: string
-  CITY?: string
-  STATE?: string
-  'STREET ADDRESS'?: string
-  ZIP?: string
-  PHONE?: string
-  [key: string]: any
+  'FILE NUMBER': string;
+  [key: string]: any;
 }
 
 export interface CounselorAssignmentRecord {
-  'FILE NUMBER': string
-  'THERAPY TYPE'?: string
-  'Counselor First Name'?: string
-  'Counselor Last Name'?: string
-  'INTAKE DATE'?: string
-  'END DATE'?: string
-  LOCATION?: string
-  STATUS?: string
-  'LOCATION DETAIL'?: string
-  [key: string]: any
+  'FILE NUMBER': string;
+  'Counselor First Name'?: string;
+  'Counselor Last Name'?: string;
+  'THERAPY TYPE'?: string;
+  'INTAKE DATE'?: string;
+  'END DATE'?: string;
+  'LOCATION'?: string;
+  'STATUS'?: string;
+  'LOCATION DETAIL'?: string;
+  [key: string]: any;
 }
 
 export interface SessionHistoryRecord {
-  'File Number': string
-  'Supervision Group'?: string
-  'Session Date'?: string
-  'Session Payment Status'?: string
-  'Session Status'?: string
-  'Session Note'?: string
-  'Payment Method'?: string
-  'Session Fee'?: string
-  [key: string]: any
+  'File Number': string;
+  'Session Date'?: string;
+  'Supervision Group'?: string;
+  'Session Status'?: string;
+  'Session Payment Status'?: string;
+  'Payment Method'?: string;
+  'Session Fee'?: string;
+  'Session Note'?: string;
+  [key: string]: any;
 }
 
-// Path configurations - in production these would be in environment variables
-const DATA_DIR = path.join(process.cwd(), 'data')
+// Helper function to load CSV data
+function loadCSV<T>(filePath: string): Promise<T[]> {
+  return new Promise((resolve, reject) => {
+    const results: T[] = [];
+    fs.createReadStream(filePath)
+      .pipe(parse({
+        delimiter: ',',
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      }))
+      .on('data', (data: T) => {
+        results.push(data);
+      })
+      .on('error', (error) => {
+        reject(error);
+      })
+      .on('end', () => {
+        resolve(results);
+      });
+  });
+}
 
-const CLIENT_FILE_PATH = path.join(DATA_DIR, 'File+Client Name.csv')
-const INTAKE_FILE_PATH = path.join(DATA_DIR, 'Intake Form.csv')
-const COUNSELOR_FILE_PATH = path.join(DATA_DIR, 'Client+Counselor Assignment.csv')
-const SESSION_FILE_PATH = path.join(DATA_DIR, 'Session History.csv')
-
-// CSV Parsing functions
-export async function parseCSV<T>(filePath: string): Promise<T[]> {
+export async function loadClientData(): Promise<ClientRecord[]> {
   try {
-    const fileContent = await fs.promises.readFile(filePath, 'utf8')
-    const records = parse(fileContent, {
-      columns: true,
-      skip_empty_lines: true,
-      trim: true
-    }) as T[]
-    
-    return records
+    const filePath = path.join(process.cwd(), 'File+Client Name.csv');
+    const data = await loadCSV<ClientRecord>(filePath);
+    return data;
   } catch (error) {
-    console.error(`Error parsing CSV file ${filePath}:`, error)
-    return []
+    console.error('Error loading client data:', error);
+    throw new Error('Failed to load client data');
   }
 }
 
-// Data loading functions
-export async function loadClientData(): Promise<ClientRecord[]> {
-  return parseCSV<ClientRecord>(CLIENT_FILE_PATH)
-}
-
 export async function loadIntakeData(): Promise<IntakeRecord[]> {
-  return parseCSV<IntakeRecord>(INTAKE_FILE_PATH)
+  try {
+    const filePath = path.join(process.cwd(), 'Intake Form.csv');
+    const data = await loadCSV<IntakeRecord>(filePath);
+    return data;
+  } catch (error) {
+    console.error('Error loading intake data:', error);
+    throw new Error('Failed to load intake data');
+  }
 }
 
 export async function loadCounselorData(): Promise<CounselorAssignmentRecord[]> {
-  return parseCSV<CounselorAssignmentRecord>(COUNSELOR_FILE_PATH)
+  try {
+    const filePath = path.join(process.cwd(), 'Client+Counselor Assignment.csv');
+    const data = await loadCSV<CounselorAssignmentRecord>(filePath);
+    return data;
+  } catch (error) {
+    console.error('Error loading counselor data:', error);
+    throw new Error('Failed to load counselor data');
+  }
 }
 
 export async function loadSessionData(): Promise<SessionHistoryRecord[]> {
-  return parseCSV<SessionHistoryRecord>(SESSION_FILE_PATH)
+  try {
+    const filePath = path.join(process.cwd(), 'Session History.csv');
+    const data = await loadCSV<SessionHistoryRecord>(filePath);
+    return data;
+  } catch (error) {
+    console.error('Error loading session data:', error);
+    throw new Error('Failed to load session data');
+  }
 }
 
-// Search utility function
-export function normalizeString(str: string): string {
-  return str.toLowerCase().trim().replace(/\s+/g, ' ')
-}
-
-export function searchRecords<T extends { [key: string]: any }>(
+// Helper function to search records for a query
+export function searchRecords<T extends Record<string, any>>(
   records: T[],
   query: string,
-  fields: string[] = []
+  fields: (keyof T)[]
 ): T[] {
-  const normalizedQuery = normalizeString(query)
+  const normalizedQuery = query.toLowerCase().trim();
   
   return records.filter(record => {
-    // If fields are specified, only search in those fields
-    if (fields.length > 0) {
-      return fields.some(field => {
-        const value = record[field]
-        return value && normalizeString(String(value)).includes(normalizedQuery)
-      })
-    }
+    return fields.some(field => {
+      const value = record[field];
+      if (value === undefined || value === null) return false;
+      
+      return String(value).toLowerCase().includes(normalizedQuery);
+    });
+  });
+}
+
+// Helper function to extract client names from a client record
+export function getClientNames(record: ClientRecord): string[] {
+  const names: string[] = [];
+  
+  for (let i = 1; i <= 4; i++) {
+    const firstName = record[`Client${i} First Name`] as string | undefined;
+    const lastName = record[`Client${i} Last Name`] as string | undefined;
     
-    // Otherwise search in all fields
-    return Object.values(record).some(value => 
-      value && normalizeString(String(value)).includes(normalizedQuery)
-    )
-  })
+    if (firstName || lastName) {
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      if (fullName.trim()) {
+        names.push(fullName);
+      }
+    }
+  }
+  
+  return names;
 }
