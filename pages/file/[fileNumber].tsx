@@ -1,97 +1,106 @@
-import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
-import Head from 'next/head'
-import Link from 'next/link'
-import FileDetails from '@/components/FileDetails'
-import styles from '@/styles/FileDetailsPage.module.css'
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import FileDetails from '@/components/FileDetails';
+import styles from '@/styles/FileDetailsPage.module.css';
 
-// Type definitions to match our components
-interface SearchResult {
-  fileNumber: string
-  type: 'client' | 'provider' | 'session'
-  name?: string
-  details: Record<string, any>
+interface FileData {
+  client: Record<string, any>;
+  providers: Record<string, any>[];
+  sessions: Record<string, any>[];
 }
 
-export default function FileDetailsPage() {
-  const router = useRouter()
-  const { fileNumber } = router.query
+const FileDetailsPage: React.FC = () => {
+  const router = useRouter();
+  const { fileNumber } = router.query;
   
-  const [loading, setLoading] = useState(true)
-  const [fileData, setFileData] = useState<SearchResult[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [fileData, setFileData] = useState<FileData | null>(null);
   
   useEffect(() => {
-    // Only fetch when we have a fileNumber
-    if (fileNumber) {
-      fetchFileData(fileNumber as string)
-    }
-  }, [fileNumber])
-  
-  const fetchFileData = async (fileNum: string) => {
-    setLoading(true)
-    setError(null)
+    if (!fileNumber) return;
     
-    try {
-      const response = await fetch('/api/file', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileNumber: fileNum }),
-      })
+    const fetchFileData = async () => {
+      setLoading(true);
+      setError(null);
       
-      const data = await response.json()
-      
-      if (response.ok) {
-        setFileData(data.results)
-      } else {
-        setError(data.error || 'An error occurred while fetching file data')
+      try {
+        const response = await fetch('/api/file', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileNumber }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching file data: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        setFileData(data);
+      } catch (err) {
+        console.error('Error fetching file data:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching file data:', err)
-      setError('Failed to fetch file data. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    };
+    
+    fetchFileData();
+  }, [fileNumber]);
+  
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <p>Loading file data...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <h2>Error Loading File</h2>
+          <p>{error}</p>
+          <Link href="/" className={styles.returnButton}>
+            Return to Search
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!fileData) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.notFound}>
+          <h2>File Not Found</h2>
+          <p>The requested file could not be found.</p>
+          <Link href="/" className={styles.returnButton}>
+            Return to Search
+          </Link>
+        </div>
+      </div>
+    );
   }
   
   return (
-    <>
-      <Head>
-        <title>{fileNumber ? `File #${fileNumber}` : 'File Details'} | Client Search</title>
-        <meta name="description" content="View detailed file information" />
-      </Head>
-      
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <Link href="/" className={styles.backLink}>
-            &larr; Back to Search
-          </Link>
-        </div>
-        
-        {loading ? (
-          <div className={styles.loading}>Loading file details...</div>
-        ) : error ? (
-          <div className={styles.error}>
-            <h2>Error</h2>
-            <p>{error}</p>
-            <button onClick={() => router.push('/')} className={styles.returnButton}>
-              Return to Search
-            </button>
-          </div>
-        ) : fileData.length > 0 ? (
-          <FileDetails fileData={fileData} />
-        ) : (
-          <div className={styles.notFound}>
-            <h2>File Not Found</h2>
-            <p>The requested file could not be found.</p>
-            <button onClick={() => router.push('/')} className={styles.returnButton}>
-              Return to Search
-            </button>
-          </div>
-        )}
-      </div>
-    </>
-  )
-}
+    <div className={styles.container}>
+      <Link href="/" className={styles.backLink}>
+        &larr; Back to Search
+      </Link>
+      <FileDetails fileNumber={fileNumber as string} fileData={fileData} />
+    </div>
+  );
+};
+
+export default FileDetailsPage;
