@@ -1,0 +1,295 @@
+.fileDetailsContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.fileHeader {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.fileTitle {
+  font-size: 2rem;
+  color: var(--dark-gray);
+  margin-bottom: 0.5rem;
+}
+
+.clientNames {
+  font-size: 1.25rem;
+  color: var(--mid-gray);
+}
+
+.tabsContainer {
+  margin-bottom: 2rem;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 0.5rem;
+}
+
+.tabButton {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-radius: 4px 4px 0 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--mid-gray);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tabButton:hover {
+  background-color: rgba(0, 112, 243, 0.05);
+  color: var(--primary-color);
+}
+
+.activeTab {
+  color: var(--primary-color);
+  border-bottom: 3px solid var(--primary-color);
+  margin-bottom: -1.5px;
+}
+
+.tabContent {
+  min-height: 300px;
+}
+
+/* Overview Tab Styles */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.overviewCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.cardTitle {
+  padding: 1rem;
+  margin: 0;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 1.1rem;
+}
+
+.cardContent {
+  padding: 1rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.infoLabel {
+  font-size: 0.875rem;
+  color: var(--mid-gray);
+  margin-bottom: 0.25rem;
+}
+
+.infoValue {
+  font-weight: 500;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tagItem {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.providersList, .clientsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.providerItem, .clientItem {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.providerItem:last-child, .clientItem:last-child {
+  border-bottom: none;
+}
+
+/* Intake Tab Styles */
+.intakeDetails {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.intakeSection {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.intakeSection:last-child {
+  border-bottom: none;
+}
+
+.intakeName {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.intakeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.intakeItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.intakeLabel {
+  font-size: 0.875rem;
+  color: var(--mid-gray);
+  margin-bottom: 0.25rem;
+}
+
+.intakeValue {
+  font-weight: 500;
+}
+
+/* Sessions Tab Styles */
+.sessionsTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sessionCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.sessionHeader {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.sessionDate {
+  font-weight: 600;
+}
+
+.sessionStatus {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.sessionGroup {
+  padding: 0.75rem 1rem;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+}
+
+.groupLabel {
+  font-weight: 600;
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.groupValue {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.sessionDetails {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.sessionDetailItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailLabel {
+  font-size: 0.875rem;
+  color: var(--mid-gray);
+  margin-bottom: 0.25rem;
+}
+
+.detailValue {
+  font-weight: 500;
+}
+
+.noData {
+  text-align: center;
+  padding: 2rem;
+  color: var(--mid-gray);
+  font-style: italic;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .intakeGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sessionHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .sessionStatus {
+    align-self: flex-start;
+  }
+  
+  .tabs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+  
+  .tabButton {
+    text-align: left;
+    border-radius: 4px;
+  }
+  
+  .activeTab {
+    border-left: 3px solid var(--primary-color);
+    border-bottom: none;
+    padding-left: 1.25rem;
+  }
+}
