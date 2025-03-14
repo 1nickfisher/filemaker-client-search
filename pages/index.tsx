@@ -1,10 +1,18 @@
 import Head from 'next/head'
 import { useState } from 'react'
 import styles from '@/styles/Home.module.css'
+import SearchResults from '@/components/SearchResults'
+
+interface SearchResult {
+  fileNumber: string
+  type: 'client' | 'provider' | 'session'
+  name?: string
+  details: Record<string, any>
+}
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState([])
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -24,7 +32,13 @@ export default function Home() {
       })
       
       const data = await response.json()
-      setSearchResults(data.results)
+      
+      if (data.error) {
+        console.error('Search error:', data.error)
+        setSearchResults([])
+      } else {
+        setSearchResults(data.results)
+      }
     } catch (error) {
       console.error('Error searching:', error)
       setSearchResults([])
@@ -68,10 +82,7 @@ export default function Home() {
           {isLoading ? (
             <p>Loading results...</p>
           ) : searchResults.length > 0 ? (
-            <div className={styles.results}>
-              {/* Results will be displayed here */}
-              <p>Search results will appear here</p>
-            </div>
+            <SearchResults results={searchResults} />
           ) : searchQuery && !isLoading ? (
             <p>No results found. Try a different search term.</p>
           ) : null}
