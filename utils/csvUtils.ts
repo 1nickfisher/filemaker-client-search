@@ -19,16 +19,8 @@ export interface ClientRecord {
 }
 
 export interface IntakeRecord {
-  'FILE NUMBER': string
-  DOB?: string
-  'EMERGENCY CONTACT NAME'?: string
-  'EMERGENCY CONTACT NUMBER'?: string
-  CITY?: string
-  STATE?: string
-  'STREET ADDRESS'?: string
-  ZIP?: string
-  PHONE?: string
-  [key: string]: any
+  'FILE NUMBER': string;
+  [key: string]: any;
 }
 
 export interface CounselorAssignmentRecord {
@@ -85,7 +77,7 @@ function loadCSV<T>(filePath: string): Promise<T[]> {
       .on('data', (data: any) => {
         // Normalize file number fields to ensure consistent format
         const normalizedData = { ...data };
-        
+
         // Handle different file number field names in different CSVs
         if ('FILE NUMBER' in normalizedData) {
           normalizedData['FILE NUMBER'] = String(normalizedData['FILE NUMBER']).trim();
@@ -93,7 +85,7 @@ function loadCSV<T>(filePath: string): Promise<T[]> {
         if ('File Number' in normalizedData) {
           normalizedData['File Number'] = String(normalizedData['File Number']).trim();
         }
-        
+
         results.push(normalizedData as T);
       })
       .on('error', (error: Error) => {
@@ -111,13 +103,13 @@ function loadCSV<T>(filePath: string): Promise<T[]> {
 export async function loadClientData(): Promise<ClientRecord[]> {
   try {
     const data = await loadCSV<ClientRecord>(CLIENT_FILE_PATH);
-    
+
     // Debug: Log a few records to check structure
     if (data.length > 0) {
       console.log('First client record example:', JSON.stringify(data[0]));
       console.log('Available fields in client record:', Object.keys(data[0]));
     }
-    
+
     return data;
   } catch (error) {
     console.error('Error loading client data:', error);
@@ -157,6 +149,7 @@ export function normalizeString(str: string): string {
   return str.toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
+// Helper function to search records for a query
 export function searchRecords<T extends Record<string, any>>(
   records: T[],
   query: string,
@@ -164,13 +157,13 @@ export function searchRecords<T extends Record<string, any>>(
 ): T[] {
   const normalizedQuery = query.toLowerCase().trim();
   console.log(`Searching for normalized query: "${normalizedQuery}" across ${fields.length} fields`);
-  
+
   return records.filter(record => {
     // Case-insensitive field lookup (since CSV headers might not match exactly)
     const hasMatch = fields.some(fieldName => {
       // Try exact match
       let value = record[fieldName];
-      
+
       // If no value found with the exact field name, try case-insensitive match
       if (value === undefined || value === null) {
         const key = Object.keys(record).find(k => k.toLowerCase() === String(fieldName).toLowerCase());
@@ -178,19 +171,19 @@ export function searchRecords<T extends Record<string, any>>(
           value = record[key];
         }
       }
-      
+
       if (value === undefined || value === null) return false;
-      
+
       const stringValue = String(value).toLowerCase().trim();
       const matches = stringValue.includes(normalizedQuery);
-      
+
       if (matches) {
         console.log(`Found match in field "${String(fieldName)}": "${stringValue}" contains "${normalizedQuery}"`);
       }
-      
+
       return matches;
     });
-    
+
     return hasMatch;
   });
 }
@@ -198,7 +191,7 @@ export function searchRecords<T extends Record<string, any>>(
 // Helper function to extract client names from a client record
 export function getClientNames(record: ClientRecord): string[] {
   const names: string[] = [];
-  
+
   // Special debugging for file 125477
   const isTargetFile = record['FILE NUMBER'] === '125477';
   if (isTargetFile) {
@@ -207,41 +200,41 @@ export function getClientNames(record: ClientRecord): string[] {
   } else {
     console.log('Extracting client names from record:', JSON.stringify(record));
   }
-  
+
   // Case-insensitive lookup helper function
   const getField = (obj: Record<string, any>, fieldName: string): any => {
     // First try exact match
     if (obj[fieldName] !== undefined) return obj[fieldName];
-    
+
     // Then try case-insensitive match
     const key = Object.keys(obj).find(k => k.toLowerCase() === fieldName.toLowerCase());
     return key ? obj[key] : undefined;
   };
-  
+
   // Check if "File Name" contains a client name (some CSVs might use this)
   const fileName = getField(record, 'File Name');
   if (isTargetFile) {
     console.log(`CSVUTILS: File Name field value for 125477: "${fileName}"`);
   }
-  
+
   if (fileName && typeof fileName === 'string' && fileName.trim() !== '') {
     names.push(fileName.trim());
     if (isTargetFile) {
       console.log(`CSVUTILS: Added name from File Name field: "${fileName.trim()}"`);
     }
   }
-  
+
   // Check each client field pair (up to 4 clients per record)
   for (let i = 1; i <= 4; i++) {
     const firstName = getField(record, `Client${i} First Name`);
     const lastName = getField(record, `Client${i} Last Name`);
-    
+
     if (isTargetFile) {
       console.log(`CSVUTILS: Checking Client${i} for 125477:`, { firstName, lastName });
     } else {
       console.log(`Checking Client${i}:`, { firstName, lastName });
     }
-    
+
     if (firstName || lastName) {
       const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
       if (fullName) {
@@ -252,12 +245,12 @@ export function getClientNames(record: ClientRecord): string[] {
       }
     }
   }
-  
+
   if (isTargetFile) {
     console.log('CSVUTILS: Final extracted client names for 125477:', names);
   } else {
     console.log('Extracted client names:', names);
   }
-  
+
   return names;
 }

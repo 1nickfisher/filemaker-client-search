@@ -39,7 +39,7 @@ interface SearchResult {
 }
 
 interface SearchResultsProps {
-  results: SearchResult[]
+  results: SearchResult[];
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
@@ -51,7 +51,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
 
   // Group results by file number
   const fileGroups: Record<string, SearchResult[]> = {}
-  
+
   results.forEach(result => {
     if (!fileGroups[result.fileNumber]) {
       fileGroups[result.fileNumber] = []
@@ -84,18 +84,18 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
     const clientResults = getClientResults(fileResults)
     const providerResults = getProviderResults(fileResults)
     const sessionResults = getSessionResults(fileResults)
-    
-    console.log(`Rendering file card for ${fileNumber}:`, { 
+
+    console.log(`Rendering file card for ${fileNumber}:`, {
       clientResults: clientResults.length,
       clientDetails: clientResults[0]?.details
     })
-    
+
     // Get client names
     let clientNames: string[] = []
     const clientResult = clientResults[0] // Get the first client result
-    
+
     console.log(`Processing client result for ${fileNumber}:`, clientResult);
-    
+
     if (clientResult?.details?.clientNames && Array.isArray(clientResult.details.clientNames)) {
       // If we have client names from the CSV data, use those
       clientNames = clientResult.details.clientNames.filter(name => name && name.trim() !== '');
@@ -119,14 +119,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
           break;
         }
       }
-      
+
       // Special case for file #125477
       if (fileNumber === '125477' && clientNames.length === 0) {
         clientNames = ['CHEN, JULIA'];
         console.log(`Using hardcoded name for special case file #125477`);
       }
     }
-    
+
     // If no client names were found, log a warning with all available fields
     if (clientNames.length === 0) {
       console.warn(`No client names found for file ${fileNumber}`);
@@ -138,26 +138,26 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
     const providerNames = providerResults
       .map(provider => provider.name)
       .filter(Boolean) as string[]
-    
+
     // Find intake date and latest session date
     let intakeDate = 'N/A'
     if (providerResults.length > 0) {
       const dates = providerResults
         .map(p => p.details?.intakeDate)
         .filter(Boolean)
-      
+
       if (dates.length > 0) {
         const earliestDate = new Date(Math.min(...dates.map(d => new Date(d).getTime())))
         intakeDate = earliestDate.toLocaleDateString()
       }
     }
-    
+
     let latestSessionDate = 'N/A'
     if (sessionResults.length > 0) {
       const dates = sessionResults
         .map(s => s.details?.date)
         .filter(Boolean)
-      
+
       if (dates.length > 0) {
         const latestDate = new Date(Math.max(...dates.map(d => new Date(d).getTime())))
         latestSessionDate = latestDate.toLocaleDateString()
@@ -173,8 +173,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
         <div className={styles.fileCardHeader}>
           <div className={styles.fileNumber}>#{fileNumber}</div>
           <div className={styles.fileName}>
-            {clientNames.length > 0 
-              ? clientNames[0] 
+            {clientNames.length > 0
+              ? clientNames[0]
               : 'No client name available'
             }</div>
         </div>
@@ -238,7 +238,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
     <div className={styles.resultsContainer}>
       {fileCards}
     </div>
-  )
-}
+  );
+};
 
-export default SearchResults
+export default SearchResults;

@@ -2,6 +2,8 @@ import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import styles from '@/styles/FileDetails.module.css'
+import BackendBanner from '@/components/BackendBanner'
+import { getSelectedBackend } from '@/utils/frontendBackend'
 
 interface SearchResult {
   fileNumber: string
@@ -202,5 +204,3 @@ export default function FileDetails() {
     </>
   )
 }
-import BackendBanner from '@/components/BackendBanner'
-import { getSelectedBackend } from '@/utils/frontendBackend'

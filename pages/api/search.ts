@@ -46,38 +46,14 @@ async function loadDataIfNeeded() {
   }
 }
 
-function formatClientName(client: csvUtils.ClientRecord, index: number): string | undefined {
-  const firstName = client[`Client${index} First Name`]
-  const lastName = client[`Client${index} Last Name`]
-  
-  if (firstName || lastName) {
-    return [firstName, lastName].filter(Boolean).join(' ')
-  }
-  
-  return undefined
-}
-
-function getClientNames(client: csvUtils.ClientRecord): string[] {
-  const names: string[] = []
-  
-  for (let i = 1; i <= 4; i++) {
-    const name = formatClientName(client, i)
-    if (name) {
-      names.push(name)
-    }
-  }
-  
-  return names
-}
-
 function formatProviderName(provider: csvUtils.CounselorAssignmentRecord): string | undefined {
   const firstName = provider['Counselor First Name']
   const lastName = provider['Counselor Last Name']
-  
+
   if (firstName || lastName) {
     return [firstName, lastName].filter(Boolean).join(' ')
   }
-  
+
   return undefined
 }
 
@@ -88,56 +64,56 @@ function getClientNamesFromFileData(fileNumber: string | undefined): string[] {
     console.warn('getClientNamesFromFileData was called with undefined or null fileNumber');
     return [];
   }
-  
+
   // Special logging for file number 125477
   const isTargetFile = fileNumber === '125477';
   if (isTargetFile) {
     console.log(`=== SPECIAL DEBUGGING for file number 125477 ===`);
   }
-  
+
   console.log(`Looking for client names for file number: ${fileNumber}`);
-  
+
   // Normalize file number to handle potential formatting differences
   const normalizedFileNumber = fileNumber.trim();
-  
+
   // Try an exact match first
   let clientRecord = clientDataCache.find(record => record['FILE NUMBER'] === normalizedFileNumber);
-  
+
   // If no exact match, try a case-insensitive match
   if (!clientRecord) {
     if (isTargetFile) {
       console.log(`No exact match found for 125477, trying case-insensitive match`);
       // Dump the first few records to see their format
-      console.log(`First few records in clientDataCache:`, 
+      console.log(`First few records in clientDataCache:`,
         clientDataCache.slice(0, 3).map(r => JSON.stringify(r)));
-      
+
       // Check if the file number exists in any form
       const hasAnyMatch = clientDataCache.some(record =>
         record['FILE NUMBER'] && record['FILE NUMBER'].includes('125477'));
       console.log(`Any record contains 125477: ${hasAnyMatch}`);
     }
-    
+
     clientRecord = clientDataCache.find(record =>
       record['FILE NUMBER'] && record['FILE NUMBER'].trim().toLowerCase() === normalizedFileNumber.toLowerCase()
     );
   }
-  
+
   if (!clientRecord) {
     console.log(`No client record found for file number: ${fileNumber}`);
-    
+
     if (isTargetFile) {
       // Try a different approach - search for any record containing this file number
       console.log(`Trying a broader search for file 125477...`);
       const potentialMatches = clientDataCache.filter(record =>
         record['FILE NUMBER'] && record['FILE NUMBER'].includes('125477'));
-      
-      console.log(`Found ${potentialMatches.length} potential matches:`, 
+
+      console.log(`Found ${potentialMatches.length} potential matches:`,
         potentialMatches.map(r => JSON.stringify(r)));
     }
-    
+
     return [];
   }
-  
+
   if (isTargetFile) {
     console.log(`Found client record for ${fileNumber}:`, JSON.stringify(clientRecord));
     console.log(`Fields available in the record:`, Object.keys(clientRecord));
@@ -145,17 +121,18 @@ function getClientNamesFromFileData(fileNumber: string | undefined): string[] {
     console.log(`Client1 First Name value:`, clientRecord['Client1 First Name']);
     console.log(`Client1 Last Name value:`, clientRecord['Client1 Last Name']);
   }
-  
+
   console.log(`Found client record for ${fileNumber}:`, JSON.stringify(clientRecord));
   const clientNames = csvUtils.getClientNames(clientRecord);
-  
+
   if (isTargetFile) {
     console.log(`Client names extracted for file 125477:`, clientNames);
     console.log(`=== END SPECIAL DEBUGGING ===`);
   }
-  
+
   return clientNames;
 }
+
 
 export default async function handler(
   req: NextApiRequest,
