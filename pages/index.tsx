@@ -2,6 +2,8 @@ import Head from 'next/head'
 import { useState } from 'react'
 import styles from '@/styles/Home.module.css'
 import SearchResults from '@/components/SearchResults'
+import BackendBanner from '@/components/BackendBanner'
+import { getSelectedBackend } from '@/utils/frontendBackend'
 
 interface SearchResult {
   fileNumber: string
@@ -23,10 +25,13 @@ export default function Home() {
     setIsLoading(true)
     
     try {
-      const response = await fetch('/api/search', {
+      const endpoint = '/api/search'
+      const backend = getSelectedBackend()
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Backend': backend,
         },
         body: JSON.stringify({ query: searchQuery }),
       })
@@ -56,6 +61,9 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
+        <div className={styles.header}>
+          <BackendBanner />
+        </div>
         <div className={styles.header}>
           <h1 className={styles.title}>Client Database Search</h1>
           <p className={styles.description}>

@@ -1,93 +1,125 @@
 .resultsContainer {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.fileGroup {
+/* New File Card Styles */
+.fileCard {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.fileCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.fileCardHeader {
+  padding: 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .fileNumber {
-  font-size: 1.5rem;
-  color: var(--dark-gray);
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--light-gray);
-  margin-bottom: 1rem;
-}
-
-.clientInfo,
-.providerInfo,
-.sessionsInfo {
-  margin-bottom: 1.5rem;
-}
-
-.clientInfo h3,
-.providerInfo h3,
-.sessionsInfo h3 {
   font-size: 1.25rem;
-  margin-bottom: 0.75rem;
-  color: var(--primary-color);
+  font-weight: 600;
+  margin: 0;
 }
 
-.detailsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-}
-
-.detailItem {
-  display: flex;
-  flex-direction: column;
-}
-
-.detailLabel {
+.fileType {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--mid-gray);
 }
 
-.detailValue {
-  font-size: 1rem;
+.fileCardContent {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-.sessions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.clientSection, .providersSection {
+  grid-column: span 1;
 }
 
-.sessionItem {
-  background-color: var(--light-gray);
-  border-radius: 6px;
-  padding: 1rem;
-}
-
-.sessionHeader {
+.datesSection {
+  grid-column: span 2;
   display: flex;
   justify-content: space-between;
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.sectionLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dark-gray);
   margin-bottom: 0.75rem;
+  display: block;
 }
 
-.sessionDate {
+.namesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nameItem {
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed #e9ecef;
+}
+
+.nameItem:last-child {
+  border-bottom: none;
+}
+
+.dateItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.dateLabel {
+  font-size: 0.875rem;
+  color: var(--mid-gray);
+  margin-bottom: 0.25rem;
+}
+
+.dateValue {
   font-weight: 500;
+  color: var(--dark-gray);
 }
 
-.sessionStatus {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
+.noData {
+  color: var(--mid-gray);
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
-.sessionDetails {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
+.fileCardFooter {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.viewDetailsText {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .noResults {
@@ -97,18 +129,25 @@
   font-size: 1.2rem;
 }
 
+/* Media query for mobile */
 @media (max-width: 768px) {
-  .detailsGrid,
-  .sessionDetails {
+  .fileCardContent {
     grid-template-columns: 1fr;
   }
   
-  .sessionHeader {
+  .datesSection {
+    grid-column: span 1;
     flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .fileCardHeader {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.5rem;
   }
   
-  .sessionStatus {
+  .fileType {
     align-self: flex-start;
   }
 }
